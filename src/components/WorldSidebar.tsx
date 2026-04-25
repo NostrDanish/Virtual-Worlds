@@ -1,6 +1,6 @@
 // WorldSidebar – search, filters, world list, random portal, adventurer's log
 import { useState, useMemo } from 'react';
-import { Search, Shuffle, MapPin, Star, Eye, ChevronRight, Globe } from 'lucide-react';
+import { Search, Shuffle, MapPin, Star, Eye, ChevronRight, Globe, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { WorldMarker, Biome } from '@/lib/worldTypes';
 import { BIOME_META } from '@/lib/worldTypes';
@@ -11,6 +11,7 @@ interface WorldSidebarProps {
   onWorldSelect: (world: WorldMarker) => void;
   onRandomPortal: () => void;
   visitedIds: Set<string>;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -26,6 +27,7 @@ export function WorldSidebar({
   onWorldSelect,
   onRandomPortal,
   visitedIds,
+  onClose,
   className,
 }: WorldSidebarProps) {
   const [query, setQuery] = useState('');
@@ -68,9 +70,17 @@ export function WorldSidebar({
       <div className="px-4 pt-4 pb-3 border-b border-[#1e3a5f]/60">
         <div className="flex items-center gap-2 mb-1">
           <Globe className="w-5 h-5 text-[#c9a84c]" />
-          <h1 className="text-[#c9a84c] font-bold text-lg tracking-wide" style={{ fontFamily: 'Palatino Linotype, serif' }}>
-            Virtual Worlds
+          <h1 className="text-[#c9a84c] font-bold text-lg tracking-wide" style={{ fontFamily: 'Cinzel, Palatino Linotype, serif' }}>
+            Virtual World's
           </h1>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="ml-auto w-7 h-7 rounded-full flex items-center justify-center text-[#4a5568] hover:text-[#c9a84c] hover:bg-[#1e3a5f]/40 transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <p className="text-[#6b7a8d] text-[11px] italic leading-tight">
           Discover, wander, and claim your place in the multiverse

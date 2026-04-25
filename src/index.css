@@ -7,37 +7,26 @@
 
 @layer base {
   :root {
-    /* Virtual Worlds dark fantasy theme */
     --background: 215 40% 8%;
     --foreground: 220 20% 90%;
-
     --card: 215 40% 10%;
     --card-foreground: 220 20% 90%;
-
     --popover: 215 45% 8%;
     --popover-foreground: 220 20% 90%;
-
     --primary: 43 65% 55%;
     --primary-foreground: 215 40% 8%;
-
     --secondary: 215 30% 15%;
     --secondary-foreground: 220 20% 80%;
-
     --muted: 215 30% 14%;
     --muted-foreground: 215 20% 50%;
-
     --accent: 263 50% 35%;
     --accent-foreground: 220 20% 95%;
-
     --destructive: 0 62% 40%;
     --destructive-foreground: 220 20% 95%;
-
     --border: 215 30% 20%;
     --input: 215 30% 14%;
     --ring: 43 65% 55%;
-
     --radius: 0.75rem;
-
     --sidebar-background: 215 42% 7%;
     --sidebar-foreground: 220 15% 75%;
     --sidebar-primary: 43 65% 55%;
@@ -49,7 +38,6 @@
   }
 
   .dark {
-    /* Same — this app is always dark-themed */
     --background: 215 40% 8%;
     --foreground: 220 20% 90%;
     --card: 215 40% 10%;
@@ -95,6 +83,10 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, sans-serif;
+    /* Prevent pull-to-refresh on mobile which breaks map panning */
+    overscroll-behavior: none;
+    /* Safe area for notched phones */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 }
 
@@ -110,31 +102,17 @@
   100% { opacity: 1; }
 }
 
-@keyframes floatUp {
-  0%   { transform: translateY(0px); }
-  50%  { transform: translateY(-6px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes starsTwinkle {
-  0%, 100% { opacity: 0.3; }
-  50%       { opacity: 1; }
 }
 
 /* ── Leaflet overrides ───────────────────────────────────────── */
 .leaflet-container {
   background: #030e1f !important;
   font-family: inherit;
+  /* Improve touch scrolling on mobile */
+  touch-action: manipulation;
 }
 
 .leaflet-control-zoom {
@@ -148,11 +126,20 @@
   background: #0d1729 !important;
   color: #c9a84c !important;
   border-bottom: 1px solid #1e3a5f !important;
-  width: 32px !important;
-  height: 32px !important;
-  line-height: 32px !important;
-  font-size: 16px !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 18px !important;
   transition: background 0.15s ease;
+}
+
+@media (max-width: 768px) {
+  .leaflet-control-zoom a {
+    width: 44px !important;
+    height: 44px !important;
+    line-height: 44px !important;
+    font-size: 20px !important;
+  }
 }
 
 .leaflet-control-zoom a:hover {
@@ -160,7 +147,7 @@
   color: #fbbf24 !important;
 }
 
-/* Custom popup styles */
+/* Popup styles */
 .fantasy-popup .leaflet-popup-content-wrapper {
   background: transparent !important;
   border: none !important;
@@ -175,6 +162,39 @@
 
 .fantasy-popup .leaflet-popup-tip-container {
   display: none;
+}
+
+/* Dark theme for popup close button */
+.fantasy-popup .leaflet-popup-close-button {
+  color: #a78bfa !important;
+  font-size: 22px !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  top: 6px !important;
+  right: 6px !important;
+  background: rgba(13, 23, 41, 0.8) !important;
+  border-radius: 50% !important;
+  text-align: center;
+  z-index: 10;
+  padding: 0 !important;
+}
+
+.fantasy-popup .leaflet-popup-close-button:hover {
+  color: #fbbf24 !important;
+  background: rgba(30, 58, 95, 0.8) !important;
+}
+
+/* Mobile: larger close button for touch targets */
+@media (max-width: 768px) {
+  .fantasy-popup .leaflet-popup-close-button {
+    font-size: 24px !important;
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    top: 4px !important;
+    right: 4px !important;
+  }
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
@@ -209,14 +229,7 @@
   text-shadow: 0 0 20px rgba(167,139,250,0.6), 0 0 40px rgba(167,139,250,0.3);
 }
 
-/* Stars background for empty areas */
-.stars-bg {
-  background-image:
-    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.3) 0%, transparent 100%),
-    radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.2) 0%, transparent 100%),
-    radial-gradient(1px 1px at 70% 10%, rgba(255,255,255,0.25) 0%, transparent 100%),
-    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
-    radial-gradient(1px 1px at 50% 90%, rgba(255,255,255,0.15) 0%, transparent 100%),
-    radial-gradient(2px 2px at 20% 45%, rgba(201,168,76,0.3) 0%, transparent 100%),
-    radial-gradient(2px 2px at 80% 35%, rgba(167,139,250,0.25) 0%, transparent 100%);
+/* Touch manipulation for better mobile scrolling */
+.touch-manipulation {
+  touch-action: manipulation;
 }

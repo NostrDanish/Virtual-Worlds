@@ -1,5 +1,6 @@
 // Virtual Worlds – main page
-// Combines the fantasy map, sidebar, header, submit dialog, and pending panel.
+// Mobile-first layout: sidebar becomes a slide-over drawer on phones.
+// Full Nostr integration for world submissions and voting.
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSeoMeta } from '@unhead/react';
@@ -11,13 +12,13 @@ import { PendingRealmsPanel } from '@/components/PendingRealmsPanel';
 import { SEED_WORLDS } from '@/lib/worldData';
 import { useNostrWorlds, useNostrPendingRealms, randomCoordinate } from '@/hooks/useWorlds';
 import type { WorldMarker, PendingRealm } from '@/lib/worldTypes';
-import { BIOME_META, UPVOTE_THRESHOLD } from '@/lib/worldTypes';
+import { BIOME_META } from '@/lib/worldTypes';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { PanelLeft, PanelLeftClose } from 'lucide-react';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
 
-// Merge seed + nostr worlds, deduplicating by URL
 function mergeWorlds(seed: WorldMarker[], nostr: WorldMarker[]): WorldMarker[] {
   const seen = new Set(seed.map(w => w.url.toLowerCase()));
   const fresh = nostr.filter(w => !seen.has(w.url.toLowerCase()));
@@ -26,26 +27,23 @@ function mergeWorlds(seed: WorldMarker[], nostr: WorldMarker[]): WorldMarker[] {
 
 const Index = () => {
   useSeoMeta({
-    title: 'Virtual Worlds – Atlas of the Multiverse',
+    title: "Virtual World's \u2013 Atlas of the Multiverse",
     description: 'Discover, wander, and claim your place in the multiverse of virtual worlds. An interactive fantasy map of digital realms powered by Nostr.',
-    ogTitle: 'Virtual Worlds – Atlas of the Multiverse',
+    ogTitle: "Virtual World's \u2013 Atlas of the Multiverse",
     ogDescription: 'Discover virtual worlds on an interactive fantasy map powered by Nostr.',
   });
 
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  // ── Data ───────────────────────────────────────────────────────────────
+  // ── Data ──────────────────────────────────────────────────────
   const { data: nostrWorlds = [] } = useNostrWorlds();
   const { data: nostrPending = [] } = useNostrPendingRealms();
 
-  // Local (offline-first) pending realms stored in localStorage
   const [localPending, setLocalPending] = useLocalStorage<PendingRealm[]>('vw:pending', []);
-  // Promoted local realms that have reached the threshold
   const [promotedIds, setPromotedIds] = useLocalStorage<string[]>('vw:promoted', []);
-  // Visited worlds for the adventurer's log
   const [visitedIds, setVisitedIds] = useLocalStorage<string[]>('vw:visited', []);
 
-  // All worlds = seed + nostr + locally promoted pending realms
   const promotedLocal: WorldMarker[] = useMemo(() => {
     return localPending
       .filter(r => promotedIds.includes(r.id))
@@ -70,18 +68,20 @@ const Index = () => {
     [nostrWorlds, promotedLocal]
   );
 
-  // ── UI State ───────────────────────────────────────────────────────────
+  // ── UI State ──────────────────────────────────────────────────
   const [selectedWorldId, setSelectedWorldId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Desktop starts open, mobile starts closed
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [pendingOpen, setPendingOpen] = useState(false);
 
-  // ── Handlers ───────────────────────────────────────────────────────────
+  // ── Handlers ──────────────────────────────────────────────────
   const handleWorldSelect = useCallback((world: WorldMarker) => {
     setSelectedWorldId(world.id);
-    // Record in adventurer's log
     setVisitedIds(prev => prev.includes(world.id) ? prev : [...prev, world.id]);
-  }, [setVisitedIds]);
+    // On mobile, close the sidebar when user taps a world
+    if (isMobile) setSidebarOpen(false);
+  }, [setVisitedIds, isMobile]);
 
   const handleRandomPortal = useCallback(() => {
     if (allWorlds.length === 0) return;
@@ -89,7 +89,7 @@ const Index = () => {
     handleWorldSelect(random);
     const biome = BIOME_META[random.biome];
     toast({
-      title: `🎲 Random Portal Opened!`,
+      title: '\uD83C\uDFB2 Random Portal Opened!',
       description: `You have been transported to ${biome.emoji} ${random.name}`,
     });
   }, [allWorlds, handleWorldSelect, toast]);
@@ -108,23 +108,23 @@ const Index = () => {
   const handleLocalPromote = useCallback((id: string) => {
     setPromotedIds(prev => prev.includes(id) ? prev : [...prev, id]);
     toast({
-      title: '✨ Realm Promoted!',
+      title: '\u2728 Realm Promoted!',
       description: 'The realm has received enough votes and been added to the Atlas!',
     });
   }, [setPromotedIds, toast]);
 
-  // ── Keyboard shortcuts (guard against text inputs) ──────────────────
+  // ── Keyboard shortcuts (desktop only) ─────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target as HTMLElement)?.isContentEditable;
-
       if (e.key === 'Escape') {
         setSelectedWorldId(null);
         setSubmitOpen(false);
         setPendingOpen(false);
+        setSidebarOpen(false);
       }
-      if (isTyping) return; // Don't fire shortcuts while typing
+      if (isTyping) return;
       if (e.key === 'r' && !e.ctrlKey && !e.metaKey) handleRandomPortal();
       if (e.key === 'b' && !e.ctrlKey && !e.metaKey) setSidebarOpen(v => !v);
     };
@@ -136,55 +136,50 @@ const Index = () => {
   const pendingCount = nostrPending.length + localPending.filter(r => !promotedIds.includes(r.id)).length;
 
   return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: '#030e1f' }}
-    >
+    <div className="flex flex-col h-full" style={{ background: '#030e1f' }}>
       {/* Header */}
       <WorldHeader
         worldCount={allWorlds.length}
         pendingCount={pendingCount}
         onSubmitClick={() => setSubmitOpen(true)}
         onPendingClick={() => setPendingOpen(true)}
+        onMenuClick={() => setSidebarOpen(v => !v)}
+        sidebarOpen={sidebarOpen}
       />
 
       {/* Main layout */}
       <div className="flex flex-1 overflow-hidden relative">
 
-        {/* Sidebar toggle button (mobile + collapsed) */}
-        <button
-          onClick={() => setSidebarOpen(v => !v)}
-          className={cn(
-            'absolute z-20 top-3 transition-all duration-300',
-            sidebarOpen ? 'left-[285px]' : 'left-3',
-            'w-8 h-8 rounded-full flex items-center justify-center',
-            'bg-[#0d1729]/90 border border-[#1e3a5f]/80 text-[#c9a84c]',
-            'hover:border-[#c9a84c]/60 hover:text-white transition-colors',
-            'shadow-[0_2px_12px_rgba(0,0,0,0.6)]'
-          )}
-          title={sidebarOpen ? 'Hide sidebar (B)' : 'Show sidebar (B)'}
-        >
-          {sidebarOpen
-            ? <PanelLeftClose className="w-4 h-4" />
-            : <PanelLeft className="w-4 h-4" />
-          }
-        </button>
+        {/* ── MOBILE: slide-over drawer with backdrop ── */}
+        {isMobile && sidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/60"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-        {/* Sidebar */}
+        {/* Sidebar – slides over on mobile, inline on desktop */}
         <div
           className={cn(
-            'flex-shrink-0 transition-all duration-300 overflow-hidden',
-            sidebarOpen ? 'w-[288px]' : 'w-0'
+            'flex-shrink-0 transition-all duration-300 overflow-hidden z-40',
+            isMobile
+              ? 'fixed inset-y-0 left-0 top-0'
+              : '',
+            isMobile
+              ? (sidebarOpen ? 'w-[300px] translate-x-0' : 'w-0 -translate-x-full')
+              : (sidebarOpen ? 'w-[288px]' : 'w-0')
           )}
+          style={isMobile ? { paddingTop: 0 } : undefined}
         >
-          {sidebarOpen && (
+          {(sidebarOpen || !isMobile) && (
             <WorldSidebar
               worlds={allWorlds}
               selectedWorldId={selectedWorldId}
               onWorldSelect={handleWorldSelect}
               onRandomPortal={handleRandomPortal}
               visitedIds={visitedSet}
-              className="h-full w-[288px]"
+              onClose={isMobile ? () => setSidebarOpen(false) : undefined}
+              className={cn('h-full', isMobile ? 'w-[300px]' : 'w-[288px]')}
             />
           )}
         </div>
@@ -196,43 +191,46 @@ const Index = () => {
             selectedWorldId={selectedWorldId}
             onWorldSelect={handleWorldSelect}
             onMapClick={() => setSelectedWorldId(null)}
+            isMobile={isMobile}
           />
 
-          {/* Keyboard shortcuts hint */}
-          <div
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 pointer-events-none"
-            style={{ animation: 'fadeInUp 0.6s ease 1s both' }}
-          >
-            {[
-              { key: 'R', label: 'Random Portal' },
-              { key: 'B', label: 'Toggle Sidebar' },
-              { key: 'Esc', label: 'Deselect' },
-            ].map(({ key, label }) => (
-              <div
-                key={key}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[10px]"
-                style={{
-                  background: 'rgba(13,23,41,0.8)',
-                  border: '1px solid rgba(30,58,95,0.6)',
-                  color: '#4a5568',
-                }}
-              >
-                <kbd className="px-1 rounded" style={{ background: 'rgba(30,58,95,0.8)', color: '#c9a84c', fontSize: '9px' }}>
-                  {key}
-                </kbd>
-                <span>{label}</span>
-              </div>
-            ))}
-          </div>
+          {/* Keyboard shortcuts hint – desktop only */}
+          {!isMobile && (
+            <div
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 pointer-events-none"
+              style={{ animation: 'fadeInUp 0.6s ease 1s both' }}
+            >
+              {[
+                { key: 'R', label: 'Random Portal' },
+                { key: 'B', label: 'Toggle Sidebar' },
+                { key: 'Esc', label: 'Deselect' },
+              ].map(({ key, label }) => (
+                <div
+                  key={key}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px]"
+                  style={{
+                    background: 'rgba(13,23,41,0.8)',
+                    border: '1px solid rgba(30,58,95,0.6)',
+                    color: '#4a5568',
+                  }}
+                >
+                  <kbd className="px-1 rounded" style={{ background: 'rgba(30,58,95,0.8)', color: '#c9a84c', fontSize: '9px' }}>
+                    {key}
+                  </kbd>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
-          {/* Selected world quick info overlay */}
-          {selectedWorldId && (() => {
+          {/* Selected world quick info – hidden on very small screens */}
+          {selectedWorldId && !isMobile && (() => {
             const world = allWorlds.find(w => w.id === selectedWorldId);
             if (!world) return null;
             const biome = BIOME_META[world.biome];
             return (
               <div
-                className="absolute top-4 right-4 w-64 rounded-xl overflow-hidden pointer-events-none animate-fade-in-up"
+                className="absolute top-4 right-4 max-w-[240px] rounded-xl overflow-hidden pointer-events-none animate-fade-in-up"
                 style={{
                   background: 'rgba(13,23,41,0.92)',
                   border: '1px solid rgba(201,168,76,0.4)',
@@ -242,15 +240,33 @@ const Index = () => {
               >
                 <div className="px-3 py-2.5 flex items-center gap-2">
                   <span className="text-xl">{biome.emoji}</span>
-                  <div>
-                    <p className="text-[#f0e6ff] font-semibold text-sm leading-tight">{world.name}</p>
+                  <div className="min-w-0">
+                    <p className="text-[#f0e6ff] font-semibold text-sm leading-tight truncate">{world.name}</p>
                     <p className="text-[#4a5568] text-xs">{biome.label}</p>
                   </div>
-                  <span className="ml-auto text-[#fbbf24] text-xs">★ {world.rating.toFixed(1)}</span>
+                  <span className="ml-auto text-[#fbbf24] text-xs flex-shrink-0">\u2605 {world.rating.toFixed(1)}</span>
                 </div>
               </div>
             );
           })()}
+
+          {/* Mobile: floating action buttons */}
+          {isMobile && (
+            <div className="absolute bottom-5 right-4 flex flex-col gap-2.5 z-10">
+              <button
+                onClick={handleRandomPortal}
+                className="w-12 h-12 rounded-full flex items-center justify-center text-lg shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, #6d28d9, #4c1d95)',
+                  border: '2px solid rgba(124,58,237,0.6)',
+                  boxShadow: '0 4px 20px rgba(109,40,217,0.5)',
+                }}
+                title="Random Portal"
+              >
+                \uD83C\uDFB2
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

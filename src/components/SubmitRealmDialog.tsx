@@ -109,12 +109,12 @@ export function SubmitRealmDialog({ isOpen, onClose }: SubmitRealmDialogProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
       onClick={e => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
-        className="relative w-full max-w-lg rounded-2xl overflow-hidden"
+        className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh]"
         style={{
           background: 'linear-gradient(135deg, #0d1729 0%, #150a2e 50%, #0a1a2e 100%)',
           border: '1px solid #3d2f6e',

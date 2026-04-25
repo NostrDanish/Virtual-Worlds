@@ -42,12 +42,12 @@ export function PendingRealmsPanel({
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="relative w-full max-w-2xl rounded-2xl overflow-hidden"
+        className="relative w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, #0d1729 0%, #100a20 100%)',
           border: '1px solid #3d2f6e',
           boxShadow: '0 0 60px rgba(139,92,246,0.2), 0 24px 48px rgba(0,0,0,0.8)',
-          maxHeight: '80vh',
+          maxHeight: '85vh',
         }}
       >
         {/* Header */}
@@ -141,7 +141,8 @@ function PendingRealmCard({
     if (!user) return;
 
     try {
-      // Publish kind 1459 upvote event
+      // Publish both kind 1459 upvote AND NIP-25 reaction (kind 7)
+      // for maximum Nostr interoperability
       await publish({
         kind: KIND_REALM_UPVOTE,
         content: '',
@@ -150,6 +151,16 @@ function PendingRealmCard({
           ['alt', `Upvote for virtual realm: ${realm.name}`],
         ],
       });
+      // Also publish a NIP-25 reaction for interoperability
+      await publish({
+        kind: 7,
+        content: '+',
+        tags: [
+          ['e', realm.id],
+          ['k', String(KIND_REALM_UPVOTE)],
+          ['alt', `Reaction to virtual realm: ${realm.name}`],
+        ],
+      }).catch(() => { /* best-effort NIP-25 reaction */ });
       setLocalVoted(true);
       await queryClient.invalidateQueries({ queryKey: ['nostr-pending-realms'] });
     } catch (err) {
@@ -187,7 +198,7 @@ function PendingRealmCard({
             <h3 className="text-[#e2d8f3] font-semibold text-sm flex-1 truncate" style={{ fontFamily: 'Palatino Linotype, serif' }}>
               {realm.name}
             </h3>
-            <span className="flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full"
+            <span className="flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full hidden sm:inline-block"
               style={{ background: `${biome?.color ?? '#333'}22`, color: biome?.color ?? '#888', border: `1px solid ${biome?.color ?? '#333'}44` }}>
               {biome?.emoji} {biome?.label}
             </span>

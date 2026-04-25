@@ -1,5 +1,5 @@
 // FantasyMap – Leaflet map with L.CRS.Simple + massive 8000x5000 SVG overlay
-// Custom glowing portal DivIcon markers with pulsing CSS animations per biome.
+// Custom glowing portal DivIcon markers, responsive popups for mobile.
 
 import { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
@@ -13,9 +13,9 @@ interface FantasyMapProps {
   selectedWorldId: string | null;
   onWorldSelect: (world: WorldMarker) => void;
   onMapClick?: () => void;
+  isMobile?: boolean;
 }
 
-// Biome glow/core color palette
 const BIOME_COLORS: Record<Biome, { glow: string; core: string }> = {
   'enchanted-forest': { glow: '#40c97f', core: '#2d6a4f' },
   'mountain-forge':   { glow: '#f59e0b', core: '#6b4226' },
@@ -79,62 +79,62 @@ function fmtNum(n: number): string {
   return `${n}`;
 }
 
-function createPopupContent(world: WorldMarker): string {
+function createPopupContent(world: WorldMarker, mobile: boolean): string {
   const biome = BIOME_META[world.biome];
   const { glow, core } = BIOME_COLORS[world.biome];
   const stars = '\u2605'.repeat(Math.round(world.rating)) + '\u2606'.repeat(5 - Math.round(world.rating));
-  const tags = world.tags.map(t =>
-    `<span style="background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:11px;margin:2px 3px 0 0;display:inline-block;">${t}</span>`
+  const tags = world.tags.slice(0, mobile ? 3 : 6).map(t =>
+    `<span style="background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:2px 7px;font-size:${mobile ? '10' : '11'}px;margin:2px 2px 0 0;display:inline-block;">${t}</span>`
   ).join('');
+  const w = mobile ? 240 : 300;
+  const imgH = mobile ? 100 : 140;
 
   return `
     <div style="
       font-family:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
       background:linear-gradient(135deg,#0f1729 0%,#1a0a2e 100%);
-      border:1px solid #4a3f6b;border-radius:14px;width:300px;overflow:hidden;
+      border:1px solid #4a3f6b;border-radius:14px;width:${w}px;overflow:hidden;
       color:#e2d8f3;box-shadow:0 12px 40px rgba(0,0,0,0.8),inset 0 1px 0 rgba(255,255,255,0.05);
     ">
       ${world.thumbnail ? `
-      <div style="height:140px;overflow:hidden;position:relative;">
+      <div style="height:${imgH}px;overflow:hidden;position:relative;">
         <img src="${world.thumbnail}" alt="${world.name}" style="width:100%;height:100%;object-fit:cover;opacity:0.85;"/>
-        <div style="position:absolute;bottom:0;left:0;right:0;height:70px;background:linear-gradient(to top,#0f1729,transparent);"></div>
-        <div style="position:absolute;top:8px;right:8px;background:${glow}22;border:1px solid ${glow}88;color:${glow};border-radius:20px;padding:4px 12px;font-size:11px;">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(to top,#0f1729,transparent);"></div>
+        <div style="position:absolute;top:6px;right:6px;background:${glow}22;border:1px solid ${glow}88;color:${glow};border-radius:20px;padding:3px 10px;font-size:10px;">
           ${biome.emoji} ${biome.label}
         </div>
       </div>` : ''}
-      <div style="padding:16px;">
-        <h3 style="margin:0 0 6px;font-size:20px;font-weight:bold;color:#f0e6ff;letter-spacing:0.5px;text-shadow:0 0 24px ${glow}55;">${world.name}</h3>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span style="color:#fbbf24;font-size:13px;letter-spacing:1px;">${stars}</span>
-          <span style="color:#6b7280;font-size:12px;">${world.rating.toFixed(1)}</span>
-          <span style="color:#4b5563;font-size:12px;">&bull;</span>
-          <span style="color:#60a5fa;font-size:12px;">\uD83D\uDC41 ${fmtNum(world.visitors)} adventurers</span>
+      <div style="padding:${mobile ? '12' : '16'}px;">
+        <h3 style="margin:0 0 4px;font-size:${mobile ? '16' : '20'}px;font-weight:bold;color:#f0e6ff;letter-spacing:0.5px;text-shadow:0 0 24px ${glow}55;">${world.name}</h3>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <span style="color:#fbbf24;font-size:12px;letter-spacing:1px;">${stars}</span>
+          <span style="color:#6b7280;font-size:11px;">${world.rating.toFixed(1)}</span>
+          <span style="color:#4b5563;font-size:11px;">&bull;</span>
+          <span style="color:#60a5fa;font-size:11px;">\uD83D\uDC41 ${fmtNum(world.visitors)}</span>
         </div>
-        <p style="margin:0 0 12px;font-size:13px;color:#a89cc8;font-style:italic;line-height:1.6;border-left:3px solid ${glow}55;padding-left:10px;">
+        <p style="margin:0 0 10px;font-size:${mobile ? '11' : '13'}px;color:#a89cc8;font-style:italic;line-height:1.5;border-left:3px solid ${glow}55;padding-left:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
           &ldquo;${world.lore}&rdquo;
         </p>
-        <div style="margin-bottom:14px;">${tags}</div>
+        <div style="margin-bottom:12px;">${tags}</div>
         <a href="${world.url}" target="_blank" rel="noopener noreferrer" style="
           display:block;text-align:center;
           background:linear-gradient(135deg,${core},${glow}cc);color:#fff;
-          text-decoration:none;padding:10px 18px;border-radius:10px;
-          font-size:14px;font-weight:bold;letter-spacing:1px;
+          text-decoration:none;padding:${mobile ? '8px 14px' : '10px 18px'};border-radius:10px;
+          font-size:${mobile ? '12' : '14'}px;font-weight:bold;letter-spacing:1px;
           border:1px solid ${glow}88;box-shadow:0 0 16px ${glow}44;
-          transition:all 0.2s ease;
-        " onmouseover="this.style.boxShadow='0 0 30px ${glow}88'" onmouseout="this.style.boxShadow='0 0 16px ${glow}44'">
-          \u26A1 Enter Portal
-        </a>
+        ">\u26A1 Enter Portal</a>
       </div>
     </div>
   `;
 }
 
-export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick }: FantasyMapProps) {
+export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick, isMobile = false }: FantasyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMap = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const isMobileRef = useRef(isMobile);
+  isMobileRef.current = isMobile;
 
-  // Initialise the Leaflet map
   useEffect(() => {
     if (!mapRef.current || leafletMap.current) return;
 
@@ -151,19 +151,16 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
       zoomSnap: 0.25,
       zoomDelta: 0.5,
       wheelPxPerZoomLevel: 100,
+      // Mobile touch settings
+      tap: false, // Prevent 300ms tap delay on mobile
+      touchZoom: true,
+      bounceAtZoomLimits: false,
     });
 
-    // Generate and overlay the massive SVG map
     const imageUrl = generateFantasyMapSvg();
     L.imageOverlay(imageUrl, bounds).addTo(map);
-
-    // Start slightly zoomed in for an immersive feel
-    map.setView([MAP_HEIGHT * 0.45, MAP_WIDTH * 0.45], -0.5);
-
-    // Custom zoom control
+    map.setView([MAP_HEIGHT * 0.45, MAP_WIDTH * 0.45], isMobile ? -1 : -0.5);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-    // Click on map background to deselect
     map.on('click', () => onMapClick?.());
 
     leafletMap.current = map;
@@ -175,7 +172,6 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep markers in sync
   const updateMarkers = useCallback(() => {
     const map = leafletMap.current;
     if (!map) return;
@@ -202,9 +198,10 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
       } else {
         const marker = L.marker(latlng, { icon })
           .addTo(map)
-          .bindPopup(createPopupContent(world), {
-            maxWidth: 320,
+          .bindPopup(createPopupContent(world, isMobileRef.current), {
+            maxWidth: isMobileRef.current ? 260 : 320,
             className: 'fantasy-popup',
+            autoPanPadding: L.point(20, 20),
           });
 
         marker.on('click', (e) => {
@@ -222,7 +219,6 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
     updateMarkers();
   }, [updateMarkers]);
 
-  // Pan to selected world
   useEffect(() => {
     if (!selectedWorldId || !leafletMap.current) return;
     const world = worlds.find(w => w.id === selectedWorldId);
@@ -231,10 +227,10 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
       if (marker) {
         leafletMap.current.flyTo(
           [world.coordinates[0], world.coordinates[1]],
-          1,
-          { animate: true, duration: 1.2 }
+          isMobileRef.current ? 0.5 : 1,
+          { animate: true, duration: 1 }
         );
-        setTimeout(() => marker.openPopup(), 600);
+        setTimeout(() => marker.openPopup(), 500);
       }
     }
   }, [selectedWorldId, worlds]);
@@ -242,11 +238,11 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
   return (
     <div
       ref={mapRef}
+      className="touch-manipulation"
       style={{
         width: '100%',
         height: '100%',
         background: '#030e1f',
-        cursor: 'crosshair',
       }}
     />
   );
