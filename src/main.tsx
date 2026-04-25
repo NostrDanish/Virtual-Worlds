@@ -7,8 +7,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import App from './App.tsx';
 import './index.css';
 
-// FIXME: a custom font should be used. Eg:
-// import '@fontsource-variable/<font-name>';
+// Force dark class on html element for fantasy theme
+document.documentElement.classList.add('dark');
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
