@@ -1,5 +1,5 @@
 // WorldHeader – top navigation bar for Virtual Worlds
-import { PlusCircle, Clock, Users } from 'lucide-react';
+import { PlusCircle, Clock } from 'lucide-react';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { cn } from '@/lib/utils';
 import { useCurrentUser } from '@/hooks/useCurrentUser';

@@ -1,394 +1,360 @@
-// Procedural SVG fantasy continent map
+// Procedural SVG fantasy continent map – MASSIVE 8000x5000 scale
 // Returns a data URL for use with L.imageOverlay
-// The map is 3200×2000 px
 
-export const MAP_SVG_WIDTH = 3200;
-export const MAP_SVG_HEIGHT = 2000;
+export const MAP_SVG_WIDTH = 8000;
+export const MAP_SVG_HEIGHT = 5000;
 
 export function generateFantasyMapSvg(): string {
+  const W = MAP_SVG_WIDTH;
+  const H = MAP_SVG_HEIGHT;
+
   const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3200 2000" width="3200" height="2000">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
   <defs>
-    <!-- Ocean gradient -->
-    <radialGradient id="oceanGrad" cx="50%" cy="50%" r="70%">
-      <stop offset="0%" stop-color="#0a2a4a"/>
-      <stop offset="60%" stop-color="#071e3d"/>
+    <radialGradient id="oceanGrad" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#0c2d4f"/>
+      <stop offset="50%" stop-color="#081e3d"/>
       <stop offset="100%" stop-color="#030e1f"/>
     </radialGradient>
-    <!-- Land base gradient -->
     <linearGradient id="landGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#2d4a22"/>
       <stop offset="40%" stop-color="#3d5a30"/>
       <stop offset="100%" stop-color="#1a3015"/>
     </linearGradient>
-    <!-- Forest biome -->
     <radialGradient id="forestGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#2d6a4f" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#1b4332" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1b4332" stop-opacity="0.55"/>
     </radialGradient>
-    <!-- Mountain biome -->
     <linearGradient id="mountainGrad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#7f5539"/>
       <stop offset="100%" stop-color="#4a2c0e"/>
     </linearGradient>
-    <!-- Crystal biome -->
     <radialGradient id="crystalGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#8ecae6" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#219ebc" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#219ebc" stop-opacity="0.35"/>
     </radialGradient>
-    <!-- Shadow biome -->
     <radialGradient id="shadowGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#3a3a5c" stop-opacity="0.95"/>
-      <stop offset="100%" stop-color="#1a1a3a" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#1a1a3a" stop-opacity="0.6"/>
     </radialGradient>
-    <!-- Floating isles biome -->
     <radialGradient id="islesGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#caf0f8" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#90e0ef" stop-opacity="0.3"/>
+      <stop offset="0%" stop-color="#caf0f8" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#90e0ef" stop-opacity="0.25"/>
     </radialGradient>
-    <!-- Void biome -->
     <radialGradient id="voidGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#6a0dad" stop-opacity="0.8"/>
-      <stop offset="100%" stop-color="#3c006e" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#3c006e" stop-opacity="0.45"/>
     </radialGradient>
-    <!-- Dragon biome -->
     <radialGradient id="dragonGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#9b1c1c" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#5c0000" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#5c0000" stop-opacity="0.55"/>
     </radialGradient>
-    <!-- Parchment texture overlay -->
-    <filter id="parchment">
-      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0.6  0 0 0 0 0.4  0 0 0 0 0.1  0 0 0 0.08 0" result="coloredNoise"/>
-      <feBlend in="SourceGraphic" in2="coloredNoise" mode="overlay"/>
-    </filter>
-    <!-- Glow filter for coastlines -->
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <!-- Subtle noise for land texture -->
+    <radialGradient id="sunkenGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#023e8a" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#012a5e" stop-opacity="0.45"/>
+    </radialGradient>
     <filter id="landNoise">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" seed="2" result="noise"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0.15  0 0 0 0 0  0 0 0 0.12 0" in="noise" result="colorNoise"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.4" numOctaves="4" seed="2" result="noise"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0.12  0 0 0 0 0  0 0 0 0.1 0" in="noise" result="colorNoise"/>
       <feBlend in="SourceGraphic" in2="colorNoise" mode="multiply"/>
+    </filter>
+    <filter id="coastGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
-  <!-- ── OCEAN BACKGROUND ─────────────────────────────────────── -->
-  <rect width="3200" height="2000" fill="url(#oceanGrad)"/>
+  <!-- OCEAN -->
+  <rect width="${W}" height="${H}" fill="url(#oceanGrad)"/>
 
-  <!-- Ocean wave texture -->
-  <g opacity="0.15" stroke="#4fc3f7" stroke-width="1" fill="none">
-    ${generateWaves()}
+  <!-- Ocean waves -->
+  <g opacity="0.1" stroke="#4fc3f7" stroke-width="1.5" fill="none">
+    ${genWaves(W, H)}
   </g>
 
-  <!-- ── MAIN CONTINENT ───────────────────────────────────────── -->
-  <!-- Large central landmass -->
+  <!-- ═══ MAIN CONTINENT ═══ -->
   <path d="
-    M 600,300 C 700,200 900,150 1100,180 C 1350,210 1550,160 1750,200
-    C 1950,240 2100,190 2300,220 C 2500,250 2700,210 2850,280
-    C 3000,350 3050,480 3020,620 C 2990,760 2900,850 2850,950
-    C 2800,1050 2820,1150 2780,1250 C 2740,1350 2650,1420 2550,1480
-    C 2450,1540 2300,1560 2150,1580 C 2000,1600 1850,1620 1700,1600
-    C 1550,1580 1400,1540 1250,1520 C 1100,1500 950,1480 800,1440
-    C 650,1400 520,1340 440,1240 C 360,1140 350,1020 370,900
-    C 390,780 440,670 480,570 C 520,470 500,400 600,300 Z
-  " fill="url(#landGrad)" filter="url(#landNoise)"/>
+    M 1400,700 C 1600,500 2000,380 2600,420 C 3200,460 3800,380 4400,450
+    C 5000,520 5500,420 6000,500 C 6500,580 6900,500 7100,650
+    C 7350,800 7400,1100 7350,1400 C 7300,1700 7100,1950 6900,2200
+    C 6700,2450 6800,2700 6700,2950 C 6600,3200 6400,3400 6100,3550
+    C 5800,3700 5400,3750 5000,3800 C 4600,3850 4200,3900 3800,3850
+    C 3400,3800 3000,3750 2600,3700 C 2200,3650 1800,3600 1500,3500
+    C 1200,3400 950,3250 800,3050 C 650,2850 600,2600 650,2350
+    C 700,2100 800,1850 850,1650 C 900,1450 950,1250 1050,1050
+    C 1150,850 1200,900 1400,700 Z
+  " fill="url(#landGrad)" filter="url(#landNoise)" stroke="#1a5c30" stroke-width="3" stroke-opacity="0.3"/>
+
+  <!-- Coastline glow -->
+  <path d="
+    M 1400,700 C 1600,500 2000,380 2600,420 C 3200,460 3800,380 4400,450
+    C 5000,520 5500,420 6000,500 C 6500,580 6900,500 7100,650
+    C 7350,800 7400,1100 7350,1400 C 7300,1700 7100,1950 6900,2200
+    C 6700,2450 6800,2700 6700,2950 C 6600,3200 6400,3400 6100,3550
+    C 5800,3700 5400,3750 5000,3800 C 4600,3850 4200,3900 3800,3850
+    C 3400,3800 3000,3750 2600,3700 C 2200,3650 1800,3600 1500,3500
+    C 1200,3400 950,3250 800,3050 C 650,2850 600,2600 650,2350
+    C 700,2100 800,1850 850,1650 C 900,1450 950,1250 1050,1050
+    C 1150,850 1200,900 1400,700 Z
+  " fill="none" stroke="#3ddc84" stroke-width="4" stroke-opacity="0.08" filter="url(#coastGlow)"/>
 
   <!-- Northern peninsula -->
-  <path d="
-    M 1400,180 C 1420,100 1480,50 1560,60 C 1640,70 1680,130 1660,200
-    C 1640,270 1580,280 1520,260 C 1460,240 1380,260 1400,180 Z
-  " fill="#2d4a22"/>
-
+  <path d="M 3400,420 C 3450,280 3550,200 3700,220 C 3850,240 3900,350 3850,450 C 3800,550 3650,560 3550,520 C 3450,480 3360,520 3400,420 Z" fill="#2d4a22"/>
+  <!-- Northwest headland -->
+  <path d="M 1600,600 C 1550,450 1650,350 1800,380 C 1950,410 1980,530 1900,600 C 1820,670 1650,680 1600,600 Z" fill="#2d4a22"/>
   <!-- Eastern cape -->
-  <path d="
-    M 2900,800 C 2970,750 3050,780 3080,850 C 3110,920 3060,980 2980,970
-    C 2900,960 2860,900 2900,800 Z
-  " fill="#2d4a22"/>
+  <path d="M 7200,1800 C 7350,1700 7500,1750 7530,1870 C 7560,1990 7450,2100 7300,2050 C 7150,2000 7100,1900 7200,1800 Z" fill="#2d4a22"/>
 
-  <!-- Western island cluster -->
-  <path d="
-    M 250,700 C 290,650 360,660 380,720 C 400,780 360,830 300,820
-    C 240,810 210,760 250,700 Z
-  " fill="#2d4a22"/>
-  <path d="
-    M 180,900 C 210,860 270,865 285,910 C 300,955 265,990 220,985
-    C 175,980 150,940 180,900 Z
-  " fill="#2d4a22"/>
-  <path d="
-    M 320,1050 C 360,1010 420,1015 435,1060 C 450,1105 415,1145 365,1140
-    C 315,1135 280,1090 320,1050 Z
-  " fill="#2d4a22"/>
+  <!-- Western islands -->
+  <path d="M 450,1600 C 500,1500 620,1510 650,1600 C 680,1690 620,1760 540,1740 C 460,1720 400,1700 450,1600 Z" fill="#2d4a22"/>
+  <path d="M 350,2100 C 390,2020 480,2025 500,2100 C 520,2175 470,2230 400,2220 C 330,2210 310,2180 350,2100 Z" fill="#2d4a22"/>
+  <path d="M 550,2500 C 600,2420 700,2425 720,2510 C 740,2595 690,2650 620,2640 C 550,2630 500,2580 550,2500 Z" fill="#2d4a22"/>
+  <path d="M 300,2800 C 340,2730 420,2735 440,2810 C 460,2885 420,2930 360,2920 C 300,2910 260,2870 300,2800 Z" fill="#2d4a22"/>
 
-  <!-- South-eastern archipelago -->
-  <path d="
-    M 2400,1650 C 2440,1610 2500,1615 2515,1655 C 2530,1695 2495,1730 2445,1720
-    C 2395,1710 2360,1690 2400,1650 Z
-  " fill="#2d4a22"/>
-  <path d="
-    M 2600,1700 C 2635,1665 2690,1670 2705,1710 C 2720,1750 2688,1785 2643,1778
-    C 2598,1771 2565,1735 2600,1700 Z
-  " fill="#2d4a22"/>
+  <!-- Southeastern archipelago -->
+  <path d="M 5800,4100 C 5860,4020 5960,4030 5980,4110 C 6000,4190 5950,4240 5880,4230 C 5810,4220 5740,4180 5800,4100 Z" fill="#2d4a22"/>
+  <path d="M 6200,4200 C 6260,4130 6360,4135 6380,4210 C 6400,4285 6350,4330 6280,4320 C 6210,4310 6140,4270 6200,4200 Z" fill="#2d4a22"/>
+  <path d="M 6500,4050 C 6550,3970 6650,3985 6670,4060 C 6690,4135 6640,4180 6580,4170 C 6520,4160 6460,4120 6500,4050 Z" fill="#2d4a22"/>
 
-  <!-- ── BIOME OVERLAYS ────────────────────────────────────────── -->
+  <!-- Northern island -->
+  <path d="M 5000,250 C 5080,170 5220,175 5250,270 C 5280,365 5200,420 5110,410 C 5020,400 4930,340 5000,250 Z" fill="#2d4a22"/>
 
-  <!-- Enchanted Forest – northwest area (social/roleplay) -->
-  <ellipse cx="1200" cy="600" rx="420" ry="300" fill="url(#forestGrad)" opacity="0.75"/>
-  <!-- Forest trees decoration -->
-  ${generateTrees(1050, 480, 12, '#1b4332', 0.7)}
-  ${generateTrees(1300, 650, 10, '#2d6a4f', 0.6)}
+  <!-- ═══ BIOME OVERLAYS ═══ -->
 
-  <!-- Mountain Forges – northeast (creative sandboxes) -->
-  <ellipse cx="2200" cy="750" rx="350" ry="280" fill="url(#mountainGrad)" opacity="0.8"/>
-  <!-- Mountain peaks -->
-  ${generateMountains(2050, 680, 7)}
+  <!-- Enchanted Forest (NW) -->
+  <ellipse cx="2800" cy="1400" rx="900" ry="700" fill="url(#forestGrad)" opacity="0.7"/>
+  ${genTrees(2300, 1100, 30, '#1b4332', 0.7, 500)}
+  ${genTrees(3100, 1500, 25, '#2d6a4f', 0.6, 400)}
+  ${genTrees(2600, 1700, 20, '#234e35', 0.55, 350)}
 
-  <!-- Crystal Spires – west coast (VR/metaverse) -->
-  <ellipse cx="760" cy="1050" rx="320" ry="350" fill="url(#crystalGrad)" opacity="0.65"/>
-  ${generateCrystals(680, 950, 8)}
+  <!-- Mountain Forges (NE) -->
+  <ellipse cx="5500" cy="1500" rx="850" ry="650" fill="url(#mountainGrad)" opacity="0.75"/>
+  ${genMountains(5000, 1200, 14)}
+  ${genMountains(5600, 1600, 10)}
 
-  <!-- Shadow Realms – far east (indie/experimental) -->
-  <ellipse cx="2700" cy="1350" rx="300" ry="250" fill="url(#shadowGrad)" opacity="0.85"/>
-  ${generateShadowSmoke(2600, 1280, 6)}
+  <!-- Crystal Spires (W) -->
+  <ellipse cx="1600" cy="2500" rx="700" ry="800" fill="url(#crystalGrad)" opacity="0.6"/>
+  ${genCrystals(1400, 2200, 16)}
+  ${genCrystals(1700, 2700, 12)}
 
-  <!-- Floating Isles – south (browser-based) -->
-  <ellipse cx="1650" cy="1700" rx="380" ry="200" fill="url(#islesGrad)" opacity="0.55"/>
-  ${generateFloatingIsles(1500, 1660, 5)}
+  <!-- Shadow Realms (E) -->
+  <ellipse cx="6600" cy="3100" rx="700" ry="600" fill="url(#shadowGrad)" opacity="0.8"/>
+  ${genSmoke(6300, 2900, 12)}
 
-  <!-- Void Nexus – far west (abstract/AI) -->
-  <ellipse cx="420" cy="1400" rx="260" ry="220" fill="url(#voidGrad)" opacity="0.8"/>
-  ${generateVoidRunes(360, 1350, 5)}
+  <!-- Floating Isles (S) -->
+  <ellipse cx="4000" cy="4100" rx="900" ry="500" fill="url(#islesGrad)" opacity="0.5"/>
+  ${genIsles(3500, 4000, 8)}
 
-  <!-- Dragon Peaks – far northeast (competitive/gaming) -->
-  <ellipse cx="2820" cy="620" rx="250" ry="220" fill="url(#dragonGrad)" opacity="0.75"/>
-  ${generateDragonSymbols(2750, 560)}
+  <!-- Void Nexus (far W) -->
+  <ellipse cx="800" cy="3200" rx="550" ry="500" fill="url(#voidGrad)" opacity="0.75"/>
+  ${genRunes(650, 3050, 9)}
 
-  <!-- ── RIVERS & WATER FEATURES ──────────────────────────────── -->
-  <path d="M 1100,400 Q 1000,600 950,800 Q 900,1000 1050,1200" 
-    stroke="#4fc3f7" stroke-width="3" fill="none" opacity="0.5"/>
-  <path d="M 1800,300 Q 1900,500 1850,700 Q 1800,900 1950,1100"
-    stroke="#4fc3f7" stroke-width="2.5" fill="none" opacity="0.45"/>
-  <path d="M 2400,500 Q 2350,700 2200,850 Q 2050,1000 2100,1200"
-    stroke="#4fc3f7" stroke-width="2" fill="none" opacity="0.4"/>
+  <!-- Dragon Peaks (far NE) -->
+  <ellipse cx="6900" cy="1200" rx="600" ry="550" fill="url(#dragonGrad)" opacity="0.7"/>
+  ${genDragon(6700, 1000)}
+  ${genMountains(6500, 1050, 6)}
 
-  <!-- Lake in center -->
-  <ellipse cx="1550" cy="900" rx="120" ry="80" fill="#1a6b8a" opacity="0.7"/>
-  <ellipse cx="1550" cy="900" rx="100" ry="65" fill="#219ebc" opacity="0.4"/>
+  <!-- Sunken Depths (center-south) -->
+  <ellipse cx="3800" cy="2800" rx="600" ry="500" fill="url(#sunkenGrad)" opacity="0.5"/>
 
-  <!-- Small lakes -->
-  <ellipse cx="900" cy="1100" rx="60" ry="40" fill="#1a6b8a" opacity="0.6"/>
-  <ellipse cx="2300" cy="1100" rx="50" ry="35" fill="#1a6b8a" opacity="0.55"/>
-
-  <!-- ── BIOME LABELS ──────────────────────────────────────────── -->
-  <g font-family="serif" fill="#d4c5a9" opacity="0.6" font-style="italic">
-    <text x="1200" y="550" text-anchor="middle" font-size="22">Enchanted Forests</text>
-    <text x="2200" y="700" text-anchor="middle" font-size="22">Mountain Forges</text>
-    <text x="760" y="1000" text-anchor="middle" font-size="20">Crystal Spires</text>
-    <text x="2700" y="1320" text-anchor="middle" font-size="20">Shadow Realms</text>
-    <text x="1650" y="1660" text-anchor="middle" font-size="20">Floating Isles</text>
-    <text x="420" y="1350" text-anchor="middle" font-size="18">Void Nexus</text>
-    <text x="2820" y="580" text-anchor="middle" font-size="20">Dragon Peaks</text>
-    <text x="1550" y="1250" text-anchor="middle" font-size="20">Sunken Depths</text>
+  <!-- ═══ RIVERS ═══ -->
+  <g stroke="#4fc3f7" fill="none" opacity="0.4" stroke-linecap="round">
+    <path d="M 2700,800 Q 2400,1300 2200,1800 Q 2000,2300 2300,2800" stroke-width="6"/>
+    <path d="M 4500,600 Q 4700,1200 4600,1800 Q 4500,2400 4800,3000" stroke-width="5"/>
+    <path d="M 6000,900 Q 5800,1500 5500,2000 Q 5200,2500 5400,3000" stroke-width="4.5"/>
+    <path d="M 3200,1000 Q 3400,1500 3600,2000 Q 3800,2500 3600,3000" stroke-width="4"/>
+    <!-- River deltas -->
+    <path d="M 2300,2800 Q 2200,3000 2100,3200" stroke-width="3"/>
+    <path d="M 2300,2800 Q 2400,3050 2350,3300" stroke-width="3"/>
+    <path d="M 4800,3000 Q 4700,3200 4600,3400" stroke-width="3"/>
+    <path d="M 4800,3000 Q 4900,3250 4850,3500" stroke-width="3"/>
   </g>
 
-  <!-- ── GRID / MAP LINES ─────────────────────────────────────── -->
-  <g opacity="0.07" stroke="#c9a84c" stroke-width="1" fill="none">
-    ${generateGridLines()}
+  <!-- ═══ LAKES ═══ -->
+  <ellipse cx="3800" cy="2000" rx="250" ry="170" fill="#1a6b8a" opacity="0.65"/>
+  <ellipse cx="3800" cy="2000" rx="200" ry="130" fill="#219ebc" opacity="0.35"/>
+  <ellipse cx="2100" cy="2600" rx="130" ry="90" fill="#1a6b8a" opacity="0.6"/>
+  <ellipse cx="5200" cy="2200" rx="150" ry="100" fill="#1a6b8a" opacity="0.55"/>
+  <ellipse cx="4200" cy="1200" rx="100" ry="70" fill="#1a6b8a" opacity="0.5"/>
+  <ellipse cx="6000" cy="2600" rx="120" ry="80" fill="#1a6b8a" opacity="0.5"/>
+
+  <!-- ═══ BIOME LABELS ═══ -->
+  <g font-family="serif" fill="#d4c5a9" opacity="0.5" font-style="italic">
+    <text x="2800" y="1200" text-anchor="middle" font-size="50">Enchanted Forests</text>
+    <text x="5500" y="1350" text-anchor="middle" font-size="50">Mountain Forges</text>
+    <text x="1600" y="2350" text-anchor="middle" font-size="45">Crystal Spires</text>
+    <text x="6600" y="3000" text-anchor="middle" font-size="45">Shadow Realms</text>
+    <text x="4000" y="3950" text-anchor="middle" font-size="45">Floating Isles</text>
+    <text x="800" y="3100" text-anchor="middle" font-size="40">Void Nexus</text>
+    <text x="6900" y="1100" text-anchor="middle" font-size="45">Dragon Peaks</text>
+    <text x="3800" y="2650" text-anchor="middle" font-size="45">Sunken Depths</text>
   </g>
 
-  <!-- ── PARCHMENT OVERLAY ─────────────────────────────────────── -->
-  <rect width="3200" height="2000" fill="none" filter="url(#parchment)" opacity="0.3"/>
+  <!-- ═══ MAP GRID ═══ -->
+  <g opacity="0.05" stroke="#c9a84c" stroke-width="1" fill="none">
+    ${genGrid(W, H, 400)}
+  </g>
 
-  <!-- ── COMPASS ROSE ──────────────────────────────────────────── -->
-  ${generateCompassRose(2980, 1880)}
+  <!-- ═══ COMPASS ROSE ═══ -->
+  ${genCompass(7500, 4600, 80)}
 
-  <!-- ── TITLE CARTOUCHE ──────────────────────────────────────── -->
-  <rect x="60" y="40" width="380" height="110" rx="8" fill="#0d1b2a" stroke="#c9a84c" stroke-width="2" opacity="0.85"/>
-  <text x="250" y="85" text-anchor="middle" font-family="serif" font-size="26" fill="#c9a84c" letter-spacing="3">VIRTUAL WORLDS</text>
-  <text x="250" y="115" text-anchor="middle" font-family="serif" font-size="13" fill="#a88a50" letter-spacing="1">THE ATLAS OF THE MULTIVERSE</text>
-  <line x1="90" y1="125" x2="410" y2="125" stroke="#c9a84c" stroke-width="1" opacity="0.5"/>
-  <text x="250" y="140" text-anchor="middle" font-family="serif" font-size="11" fill="#7a6a40" font-style="italic">Here be digital wonders</text>
+  <!-- ═══ TITLE CARTOUCHE ═══ -->
+  <rect x="100" y="80" width="600" height="180" rx="12" fill="#0d1b2a" stroke="#c9a84c" stroke-width="3" opacity="0.85"/>
+  <text x="400" y="150" text-anchor="middle" font-family="serif" font-size="42" fill="#c9a84c" letter-spacing="4">VIRTUAL WORLDS</text>
+  <text x="400" y="195" text-anchor="middle" font-family="serif" font-size="20" fill="#a88a50" letter-spacing="2">THE ATLAS OF THE MULTIVERSE</text>
+  <line x1="150" y1="215" x2="650" y2="215" stroke="#c9a84c" stroke-width="1.5" opacity="0.5"/>
+  <text x="400" y="240" text-anchor="middle" font-family="serif" font-size="16" fill="#7a6a40" font-style="italic">Here be digital wonders</text>
 
-  <!-- Decorative corners -->
-  ${generateCornerDecorations()}
-</svg>
-`.trim();
+  <!-- Corner decorations -->
+  ${genCorners(W, H)}
+
+  <!-- Scale bar -->
+  <g transform="translate(200, 4750)" opacity="0.4">
+    <line x1="0" y1="0" x2="400" y2="0" stroke="#c9a84c" stroke-width="2"/>
+    <line x1="0" y1="-8" x2="0" y2="8" stroke="#c9a84c" stroke-width="2"/>
+    <line x1="400" y1="-8" x2="400" y2="8" stroke="#c9a84c" stroke-width="2"/>
+    <line x1="200" y1="-5" x2="200" y2="5" stroke="#c9a84c" stroke-width="1.5"/>
+    <text x="200" y="25" text-anchor="middle" font-family="serif" font-size="14" fill="#c9a84c">100 leagues</text>
+  </g>
+</svg>`.trim();
 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-function generateWaves(): string {
+// ─── Helpers ─────────────────────────────────────────────────────
+
+function genWaves(w: number, h: number): string {
   const lines: string[] = [];
-  for (let y = 100; y < 2000; y += 60) {
-    const points = [];
-    for (let x = 0; x < 3200; x += 80) {
-      const offset = Math.sin((x + y) * 0.02) * 8;
-      points.push(`${x},${y + offset}`);
+  for (let y = 120; y < h; y += 80) {
+    const pts: string[] = [];
+    for (let x = 0; x < w; x += 100) {
+      const off = Math.sin((x + y) * 0.015) * 12;
+      pts.push(`${x},${y + off}`);
     }
-    lines.push(`<polyline points="${points.join(' ')}"/>`);
+    lines.push(`<polyline points="${pts.join(' ')}"/>`);
   }
-  return lines.join('\n  ');
+  return lines.join('\n    ');
 }
 
-function generateTrees(x: number, y: number, count: number, color: string, opacity: number): string {
-  const trees: string[] = [];
+function genTrees(cx: number, cy: number, count: number, color: string, op: number, spread: number): string {
+  const out: string[] = [];
   for (let i = 0; i < count; i++) {
-    const tx = x + (Math.sin(i * 1.7) * 180);
-    const ty = y + (Math.cos(i * 2.3) * 120);
-    const size = 14 + Math.sin(i * 3.1) * 6;
-    trees.push(`
-      <polygon points="${tx},${ty - size} ${tx - size * 0.6},${ty + size * 0.4} ${tx + size * 0.6},${ty + size * 0.4}"
-        fill="${color}" opacity="${opacity}"/>
-      <rect x="${tx - 2}" y="${ty + size * 0.4}" width="4" height="${size * 0.4}"
-        fill="#4a2c0e" opacity="${opacity}"/>
-    `);
+    const a = (i / count) * Math.PI * 2 + i * 0.7;
+    const r = (Math.sin(i * 1.7) * 0.5 + 0.5) * spread;
+    const tx = cx + Math.cos(a) * r;
+    const ty = cy + Math.sin(a) * r;
+    const s = 20 + Math.sin(i * 3.1) * 10;
+    out.push(`<polygon points="${tx},${ty - s} ${tx - s * 0.6},${ty + s * 0.4} ${tx + s * 0.6},${ty + s * 0.4}" fill="${color}" opacity="${op}"/>`);
+    out.push(`<rect x="${tx - 3}" y="${ty + s * 0.4}" width="6" height="${s * 0.4}" fill="#4a2c0e" opacity="${op}"/>`);
   }
-  return trees.join('');
+  return out.join('\n    ');
 }
 
-function generateMountains(x: number, y: number, count: number): string {
-  const mts: string[] = [];
+function genMountains(cx: number, cy: number, count: number): string {
+  const out: string[] = [];
   for (let i = 0; i < count; i++) {
-    const mx = x + i * 48 + Math.sin(i * 0.8) * 20;
-    const my = y + Math.cos(i * 1.2) * 30;
-    const w = 50 + Math.sin(i * 2) * 15;
-    const h = 80 + Math.cos(i * 1.5) * 25;
-    mts.push(`
-      <polygon points="${mx},${my - h} ${mx - w},${my + h * 0.3} ${mx + w},${my + h * 0.3}"
-        fill="#8b6914" opacity="0.8"/>
-      <polygon points="${mx},${my - h} ${mx - w * 0.3},${my - h * 0.4} ${mx + w * 0.3},${my - h * 0.4}"
-        fill="#e8e8e8" opacity="0.7"/>
-    `);
+    const mx = cx + i * 75 + Math.sin(i * 0.8) * 40;
+    const my = cy + Math.cos(i * 1.2) * 50;
+    const w = 70 + Math.sin(i * 2) * 25;
+    const h = 110 + Math.cos(i * 1.5) * 40;
+    out.push(`<polygon points="${mx},${my - h} ${mx - w},${my + h * 0.3} ${mx + w},${my + h * 0.3}" fill="#8b6914" opacity="0.8"/>`);
+    out.push(`<polygon points="${mx},${my - h} ${mx - w * 0.3},${my - h * 0.35} ${mx + w * 0.3},${my - h * 0.35}" fill="#e8e8e8" opacity="0.65"/>`);
   }
-  return mts.join('');
+  return out.join('\n    ');
 }
 
-function generateCrystals(x: number, y: number, count: number): string {
-  const crystals: string[] = [];
+function genCrystals(cx: number, cy: number, count: number): string {
+  const out: string[] = [];
   for (let i = 0; i < count; i++) {
-    const cx = x + (Math.sin(i * 1.4) * 200);
-    const cy = y + (Math.cos(i * 2.1) * 150);
-    const h = 30 + Math.sin(i * 0.9) * 20;
-    const w = 10 + Math.cos(i * 1.7) * 5;
-    crystals.push(`
-      <polygon points="${cx},${cy - h} ${cx - w},${cy} ${cx},${cy + w * 0.5} ${cx + w},${cy}"
-        fill="#a8d8ea" opacity="0.7"/>
-    `);
+    const a = (i / count) * Math.PI * 2;
+    const r = 100 + Math.sin(i * 1.4) * 250;
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    const h = 40 + Math.sin(i * 0.9) * 25;
+    const w = 14 + Math.cos(i * 1.7) * 6;
+    out.push(`<polygon points="${x},${y - h} ${x - w},${y} ${x},${y + w * 0.5} ${x + w},${y}" fill="#a8d8ea" opacity="0.7"/>`);
   }
-  return crystals.join('');
+  return out.join('\n    ');
 }
 
-function generateShadowSmoke(x: number, y: number, count: number): string {
-  const smoke: string[] = [];
+function genSmoke(cx: number, cy: number, count: number): string {
+  const out: string[] = [];
   for (let i = 0; i < count; i++) {
-    const sx = x + (Math.sin(i * 2.1) * 150);
-    const sy = y + (Math.cos(i * 1.3) * 100);
-    const r = 30 + Math.sin(i * 0.7) * 20;
-    smoke.push(`<circle cx="${sx}" cy="${sy}" r="${r}" fill="#2e2e4e" opacity="0.6"/>`);
+    const sx = cx + Math.sin(i * 2.1) * 350;
+    const sy = cy + Math.cos(i * 1.3) * 250;
+    const r = 40 + Math.sin(i * 0.7) * 30;
+    out.push(`<circle cx="${sx}" cy="${sy}" r="${r}" fill="#2e2e4e" opacity="0.55"/>`);
   }
-  return smoke.join('');
+  return out.join('\n    ');
 }
 
-function generateFloatingIsles(x: number, y: number, count: number): string {
-  const isles: string[] = [];
+function genIsles(cx: number, cy: number, count: number): string {
+  const out: string[] = [];
   for (let i = 0; i < count; i++) {
-    const ix = x + i * 130 + Math.sin(i * 1.2) * 40;
-    const iy = y + Math.cos(i * 2.4) * 50;
-    const w = 60 + Math.sin(i * 0.8) * 25;
-    const h = 22 + Math.cos(i * 1.1) * 8;
-    isles.push(`
-      <ellipse cx="${ix}" cy="${iy}" rx="${w}" ry="${h}"
-        fill="#7ec8e3" opacity="0.55"/>
-      <ellipse cx="${ix}" cy="${iy - h * 0.4}" rx="${w * 0.6}" ry="${h * 0.5}"
-        fill="#2d4a22" opacity="0.65"/>
-    `);
+    const ix = cx + i * 200 + Math.sin(i * 1.2) * 60;
+    const iy = cy + Math.cos(i * 2.4) * 80;
+    const w = 80 + Math.sin(i * 0.8) * 35;
+    const h = 30 + Math.cos(i * 1.1) * 12;
+    out.push(`<ellipse cx="${ix}" cy="${iy}" rx="${w}" ry="${h}" fill="#7ec8e3" opacity="0.5"/>`);
+    out.push(`<ellipse cx="${ix}" cy="${iy - h * 0.4}" rx="${w * 0.6}" ry="${h * 0.5}" fill="#2d4a22" opacity="0.6"/>`);
   }
-  return isles.join('');
+  return out.join('\n    ');
 }
 
-function generateVoidRunes(x: number, y: number, count: number): string {
-  const runes: string[] = [];
-  const symbols = ['⬡', '△', '◈', '⊛', '⬟'];
+function genRunes(cx: number, cy: number, count: number): string {
+  const out: string[] = [];
+  const syms = ['\u2B21', '\u25B3', '\u25C8', '\u229B', '\u2B1F'];
   for (let i = 0; i < count; i++) {
-    const rx = x + (Math.sin(i * 1.8) * 120);
-    const ry = y + (Math.cos(i * 2.4) * 100);
-    runes.push(`
-      <circle cx="${rx}" cy="${ry}" r="18" fill="none" stroke="#b44fc7" stroke-width="1.5" opacity="0.6"/>
-      <text x="${rx}" y="${ry + 6}" text-anchor="middle" font-size="16" fill="#d44fef" opacity="0.7">${symbols[i % symbols.length]}</text>
-    `);
+    const rx = cx + Math.sin(i * 1.8) * 280;
+    const ry = cy + Math.cos(i * 2.4) * 250;
+    out.push(`<circle cx="${rx}" cy="${ry}" r="25" fill="none" stroke="#b44fc7" stroke-width="2" opacity="0.55"/>`);
+    out.push(`<text x="${rx}" y="${ry + 8}" text-anchor="middle" font-size="22" fill="#d44fef" opacity="0.65">${syms[i % syms.length]}</text>`);
   }
-  return runes.join('');
+  return out.join('\n    ');
 }
 
-function generateDragonSymbols(x: number, y: number): string {
+function genDragon(x: number, y: number): string {
   return `
-    <!-- Dragon silhouette -->
-    <path d="M ${x + 70},${y + 60} C ${x + 50},${y + 20} ${x + 80},${y} ${x + 100},${y + 30}
-      C ${x + 120},${y + 10} ${x + 150},${y + 20} ${x + 140},${y + 60}
-      C ${x + 160},${y + 50} ${x + 180},${y + 70} ${x + 160},${y + 90}
-      C ${x + 140},${y + 110} ${x + 100},${y + 100} ${x + 80},${y + 90}
-      C ${x + 60},${y + 80} ${x + 90},${y + 100} ${x + 70},${y + 60} Z"
-      fill="#c53030" opacity="0.65"/>
-    <!-- Wings -->
-    <path d="M ${x + 90},${y + 50} L ${x + 30},${y + 20} L ${x + 70},${y + 70} Z"
-      fill="#9b1c1c" opacity="0.5"/>
-    <path d="M ${x + 130},${y + 50} L ${x + 200},${y + 25} L ${x + 155},${y + 70} Z"
-      fill="#9b1c1c" opacity="0.5"/>
+    <path d="M ${x + 100},${y + 100} C ${x + 60},${y + 30} ${x + 120},${y} ${x + 160},${y + 50}
+      C ${x + 200},${y + 20} ${x + 250},${y + 40} ${x + 230},${y + 100}
+      C ${x + 270},${y + 80} ${x + 300},${y + 120} ${x + 270},${y + 160}
+      C ${x + 240},${y + 200} ${x + 160},${y + 180} ${x + 120},${y + 160}
+      C ${x + 80},${y + 140} ${x + 140},${y + 180} ${x + 100},${y + 100} Z"
+      fill="#c53030" opacity="0.6"/>
+    <path d="M ${x + 140},${y + 80} L ${x + 40},${y + 30} L ${x + 100},${y + 120} Z" fill="#9b1c1c" opacity="0.45"/>
+    <path d="M ${x + 210},${y + 80} L ${x + 340},${y + 35} L ${x + 250},${y + 120} Z" fill="#9b1c1c" opacity="0.45"/>
   `;
 }
 
-function generateGridLines(): string {
-  const lines: string[] = [];
-  for (let x = 200; x < 3200; x += 200) {
-    lines.push(`<line x1="${x}" y1="0" x2="${x}" y2="2000"/>`);
-  }
-  for (let y = 200; y < 2000; y += 200) {
-    lines.push(`<line x1="0" y1="${y}" x2="3200" y2="${y}"/>`);
-  }
-  return lines.join('\n  ');
+function genGrid(w: number, h: number, step: number): string {
+  const out: string[] = [];
+  for (let x = step; x < w; x += step) out.push(`<line x1="${x}" y1="0" x2="${x}" y2="${h}"/>`);
+  for (let y = step; y < h; y += step) out.push(`<line x1="0" y1="${y}" x2="${w}" y2="${y}"/>`);
+  return out.join('\n    ');
 }
 
-function generateCompassRose(cx: number, cy: number): string {
-  const r = 55;
+function genCompass(cx: number, cy: number, r: number): string {
   return `
   <g transform="translate(${cx},${cy})">
-    <!-- Outer ring -->
-    <circle cx="0" cy="0" r="${r + 10}" fill="none" stroke="#c9a84c" stroke-width="1.5" opacity="0.7"/>
-    <circle cx="0" cy="0" r="${r - 10}" fill="#0d1b2a" opacity="0.8"/>
-    <!-- Cardinal points -->
-    <polygon points="0,${-r} -10,${-r * 0.4} 10,${-r * 0.4}" fill="#c9a84c" opacity="0.9"/>
-    <polygon points="0,${r} -10,${r * 0.4} 10,${r * 0.4}" fill="#6a5a30" opacity="0.9"/>
-    <polygon points="${-r},0 ${-r * 0.4},-10 ${-r * 0.4},10" fill="#c9a84c" opacity="0.9"/>
-    <polygon points="${r},0 ${r * 0.4},-10 ${r * 0.4},10" fill="#6a5a30" opacity="0.9"/>
-    <!-- Intercardinal -->
-    <polygon points="${r * 0.7},${-r * 0.7} ${r * 0.5},${-r * 0.2} ${r * 0.2},${-r * 0.5}" fill="#a88a50" opacity="0.7"/>
-    <polygon points="${-r * 0.7},${-r * 0.7} ${-r * 0.5},${-r * 0.2} ${-r * 0.2},${-r * 0.5}" fill="#a88a50" opacity="0.7"/>
-    <polygon points="${r * 0.7},${r * 0.7} ${r * 0.5},${r * 0.2} ${r * 0.2},${r * 0.5}" fill="#a88a50" opacity="0.7"/>
-    <polygon points="${-r * 0.7},${r * 0.7} ${-r * 0.5},${r * 0.2} ${-r * 0.2},${r * 0.5}" fill="#a88a50" opacity="0.7"/>
-    <!-- Center dot -->
-    <circle cx="0" cy="0" r="5" fill="#c9a84c"/>
-    <!-- N label -->
-    <text x="0" y="${-r - 14}" text-anchor="middle" font-family="serif" font-size="14" fill="#c9a84c" font-weight="bold">N</text>
+    <circle cx="0" cy="0" r="${r + 15}" fill="none" stroke="#c9a84c" stroke-width="2" opacity="0.6"/>
+    <circle cx="0" cy="0" r="${r - 15}" fill="#0d1b2a" opacity="0.8"/>
+    <polygon points="0,${-r} -14,${-r * 0.35} 14,${-r * 0.35}" fill="#c9a84c" opacity="0.85"/>
+    <polygon points="0,${r} -14,${r * 0.35} 14,${r * 0.35}" fill="#6a5a30" opacity="0.85"/>
+    <polygon points="${-r},0 ${-r * 0.35},-14 ${-r * 0.35},14" fill="#c9a84c" opacity="0.85"/>
+    <polygon points="${r},0 ${r * 0.35},-14 ${r * 0.35},14" fill="#6a5a30" opacity="0.85"/>
+    <circle cx="0" cy="0" r="7" fill="#c9a84c"/>
+    <text x="0" y="${-r - 20}" text-anchor="middle" font-family="serif" font-size="20" fill="#c9a84c" font-weight="bold">N</text>
   </g>`;
 }
 
-function generateCornerDecorations(): string {
-  const size = 40;
+function genCorners(w: number, h: number): string {
+  const s = 60;
   const corners: [number, number, string][] = [
-    [10, 10, ''],
-    [3190, 10, 'scale(-1,1)'],
-    [10, 1990, 'scale(1,-1)'],
-    [3190, 1990, 'scale(-1,-1)'],
+    [15, 15, ''], [w - 15, 15, 'scale(-1,1)'],
+    [15, h - 15, 'scale(1,-1)'], [w - 15, h - 15, 'scale(-1,-1)'],
   ];
-  return corners.map(([x, y, transform]) => `
-    <g transform="translate(${x},${y}) ${transform}" transform-origin="${x} ${y}">
-      <path d="M 0,0 L ${size},0 L ${size},8 L 8,8 L 8,${size} L 0,${size} Z"
-        fill="none" stroke="#c9a84c" stroke-width="1.5" opacity="0.5"/>
-    </g>
-  `).join('');
+  return corners.map(([x, y, t]) => `
+    <g transform="translate(${x},${y}) ${t}" transform-origin="${x} ${y}">
+      <path d="M 0,0 L ${s},0 L ${s},12 L 12,12 L 12,${s} L 0,${s} Z" fill="none" stroke="#c9a84c" stroke-width="2" opacity="0.45"/>
+    </g>`).join('');
 }

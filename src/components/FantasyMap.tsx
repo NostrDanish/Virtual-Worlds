@@ -1,5 +1,5 @@
-// FantasyMap – Leaflet map with L.CRS.Simple + image overlay
-// Markers are custom glowing portal DivIcons with pulsing CSS animations.
+// FantasyMap – Leaflet map with L.CRS.Simple + massive 8000x5000 SVG overlay
+// Custom glowing portal DivIcon markers with pulsing CSS animations per biome.
 
 import { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
@@ -15,7 +15,7 @@ interface FantasyMapProps {
   onMapClick?: () => void;
 }
 
-// Color config per biome
+// Biome glow/core color palette
 const BIOME_COLORS: Record<Biome, { glow: string; core: string }> = {
   'enchanted-forest': { glow: '#40c97f', core: '#2d6a4f' },
   'mountain-forge':   { glow: '#f59e0b', core: '#6b4226' },
@@ -29,57 +29,37 @@ const BIOME_COLORS: Record<Biome, { glow: string; core: string }> = {
 
 function createPortalIcon(biome: Biome, isSelected: boolean): L.DivIcon {
   const { glow, core } = BIOME_COLORS[biome];
-  const size = isSelected ? 28 : 22;
-  const pulseSize = size + 14;
+  const size = isSelected ? 34 : 26;
+  const pulseSize = size + 20;
+  const outerSize = pulseSize + 16;
 
   const html = `
-    <div class="portal-marker" data-biome="${biome}" style="position:relative;width:${size}px;height:${size}px;">
-      <!-- Outer pulse ring -->
+    <div class="portal-marker" style="position:relative;width:${outerSize}px;height:${outerSize}px;">
       <div style="
-        position:absolute;
-        top:50%;left:50%;
-        transform:translate(-50%,-50%);
-        width:${pulseSize}px;height:${pulseSize}px;
-        border-radius:50%;
-        background:${glow};
-        opacity:0.25;
-        animation: portalPulse 2s ease-in-out infinite;
-        pointer-events:none;
+        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        width:${pulseSize + 10}px;height:${pulseSize + 10}px;border-radius:50%;
+        background:${glow};opacity:0.2;
+        animation:portalPulse 2.2s ease-in-out infinite;pointer-events:none;
       "></div>
-      <!-- Inner glow ring -->
       <div style="
-        position:absolute;
-        top:50%;left:50%;
-        transform:translate(-50%,-50%);
-        width:${size + 6}px;height:${size + 6}px;
-        border-radius:50%;
-        background:transparent;
-        border:2px solid ${glow};
-        box-shadow: 0 0 10px ${glow}, 0 0 20px ${glow}60;
-        animation: portalGlow 2s ease-in-out infinite alternate;
-        pointer-events:none;
+        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        width:${size + 8}px;height:${size + 8}px;border-radius:50%;
+        background:transparent;border:2px solid ${glow};
+        box-shadow:0 0 14px ${glow},0 0 28px ${glow}55;
+        animation:portalGlow 2s ease-in-out infinite alternate;pointer-events:none;
       "></div>
-      <!-- Core portal -->
       <div style="
-        position:absolute;
-        top:50%;left:50%;
-        transform:translate(-50%,-50%);
-        width:${size}px;height:${size}px;
-        border-radius:50%;
-        background:radial-gradient(circle, ${glow}cc 0%, ${core}ff 60%, #000000cc 100%);
+        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        width:${size}px;height:${size}px;border-radius:50%;
+        background:radial-gradient(circle,${glow}cc 0%,${core} 55%,#000000cc 100%);
         border:2px solid ${glow};
-        box-shadow: 0 0 8px ${glow}, inset 0 0 8px rgba(0,0,0,0.6);
+        box-shadow:0 0 10px ${glow},inset 0 0 10px rgba(0,0,0,0.5);
         cursor:pointer;
-        transition: transform 0.2s ease;
       "></div>
       ${isSelected ? `<div style="
-        position:absolute;
-        top:-4px;left:-4px;
-        width:${size + 8}px;height:${size + 8}px;
-        border-radius:50%;
-        border:2px solid #fbbf24;
-        box-shadow: 0 0 16px #fbbf24;
-        pointer-events:none;
+        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        width:${size + 14}px;height:${size + 14}px;border-radius:50%;
+        border:2px solid #fbbf24;box-shadow:0 0 20px #fbbf24;pointer-events:none;
       "></div>` : ''}
     </div>
   `;
@@ -87,13 +67,13 @@ function createPortalIcon(biome: Biome, isSelected: boolean): L.DivIcon {
   return L.divIcon({
     html,
     className: '',
-    iconSize: [pulseSize + 10, pulseSize + 10],
-    iconAnchor: [(pulseSize + 10) / 2, (pulseSize + 10) / 2],
-    popupAnchor: [0, -(pulseSize / 2)],
+    iconSize: [outerSize, outerSize],
+    iconAnchor: [outerSize / 2, outerSize / 2],
+    popupAnchor: [0, -(outerSize / 2)],
   });
 }
 
-function formatVisitors(n: number): string {
+function fmtNum(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
   return `${n}`;
@@ -101,91 +81,49 @@ function formatVisitors(n: number): string {
 
 function createPopupContent(world: WorldMarker): string {
   const biome = BIOME_META[world.biome];
-  const stars = '★'.repeat(Math.round(world.rating)) + '☆'.repeat(5 - Math.round(world.rating));
+  const { glow, core } = BIOME_COLORS[world.biome];
+  const stars = '\u2605'.repeat(Math.round(world.rating)) + '\u2606'.repeat(5 - Math.round(world.rating));
   const tags = world.tags.map(t =>
-    `<span style="background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:2px 7px;font-size:10px;margin:2px 2px 0 0;display:inline-block;">${t}</span>`
+    `<span style="background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:11px;margin:2px 3px 0 0;display:inline-block;">${t}</span>`
   ).join('');
 
   return `
     <div style="
-      font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
-      background: linear-gradient(135deg, #0f1729 0%, #1a0a2e 100%);
-      border: 1px solid #4a3f6b;
-      border-radius: 12px;
-      width: 280px;
-      overflow: hidden;
-      color: #e2d8f3;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05);
+      font-family:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+      background:linear-gradient(135deg,#0f1729 0%,#1a0a2e 100%);
+      border:1px solid #4a3f6b;border-radius:14px;width:300px;overflow:hidden;
+      color:#e2d8f3;box-shadow:0 12px 40px rgba(0,0,0,0.8),inset 0 1px 0 rgba(255,255,255,0.05);
     ">
-      <!-- Thumbnail -->
       ${world.thumbnail ? `
-      <div style="height:130px;overflow:hidden;position:relative;">
-        <img src="${world.thumbnail}" alt="${world.name}"
-          style="width:100%;height:100%;object-fit:cover;opacity:0.85;"/>
-        <div style="position:absolute;bottom:0;left:0;right:0;height:60px;
-          background:linear-gradient(to top,#0f1729,transparent);"></div>
-        <div style="position:absolute;top:8px;right:8px;
-          background:${BIOME_COLORS[world.biome].glow}22;
-          border:1px solid ${BIOME_COLORS[world.biome].glow}88;
-          color:${BIOME_COLORS[world.biome].glow};
-          border-radius:20px;padding:3px 10px;font-size:11px;">
+      <div style="height:140px;overflow:hidden;position:relative;">
+        <img src="${world.thumbnail}" alt="${world.name}" style="width:100%;height:100%;object-fit:cover;opacity:0.85;"/>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:70px;background:linear-gradient(to top,#0f1729,transparent);"></div>
+        <div style="position:absolute;top:8px;right:8px;background:${glow}22;border:1px solid ${glow}88;color:${glow};border-radius:20px;padding:4px 12px;font-size:11px;">
           ${biome.emoji} ${biome.label}
         </div>
       </div>` : ''}
-
-      <div style="padding:14px;">
-        <!-- Title -->
-        <h3 style="
-          margin:0 0 4px;
-          font-size:18px;
-          font-weight:bold;
-          color:#f0e6ff;
-          letter-spacing:0.5px;
-          text-shadow: 0 0 20px ${BIOME_COLORS[world.biome].glow}66;
-        ">${world.name}</h3>
-
-        <!-- Rating + visitors -->
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <span style="color:#fbbf24;font-size:12px;letter-spacing:1px;">${stars}</span>
-          <span style="color:#6b7280;font-size:11px;">${world.rating.toFixed(1)}</span>
-          <span style="color:#4b5563;font-size:11px;">•</span>
-          <span style="color:#60a5fa;font-size:11px;">👁 ${formatVisitors(world.visitors)} adventurers</span>
+      <div style="padding:16px;">
+        <h3 style="margin:0 0 6px;font-size:20px;font-weight:bold;color:#f0e6ff;letter-spacing:0.5px;text-shadow:0 0 24px ${glow}55;">${world.name}</h3>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="color:#fbbf24;font-size:13px;letter-spacing:1px;">${stars}</span>
+          <span style="color:#6b7280;font-size:12px;">${world.rating.toFixed(1)}</span>
+          <span style="color:#4b5563;font-size:12px;">&bull;</span>
+          <span style="color:#60a5fa;font-size:12px;">\uD83D\uDC41 ${fmtNum(world.visitors)} adventurers</span>
         </div>
-
-        <!-- Lore text -->
-        <p style="
-          margin:0 0 10px;
-          font-size:12px;
-          color:#a89cc8;
-          font-style:italic;
-          line-height:1.5;
-          border-left:2px solid ${BIOME_COLORS[world.biome].glow}66;
-          padding-left:8px;
-        ">"${world.lore}"</p>
-
-        <!-- Tags -->
-        <div style="margin-bottom:12px;">${tags}</div>
-
-        <!-- CTA button -->
-        <a href="${world.url}" target="_blank" rel="noopener noreferrer"
-          style="
-            display:block;
-            text-align:center;
-            background:linear-gradient(135deg, ${BIOME_COLORS[world.biome].core}, ${BIOME_COLORS[world.biome].glow}cc);
-            color:#fff;
-            text-decoration:none;
-            padding:9px 16px;
-            border-radius:8px;
-            font-size:13px;
-            font-weight:bold;
-            letter-spacing:1px;
-            border:1px solid ${BIOME_COLORS[world.biome].glow}88;
-            box-shadow: 0 0 12px ${BIOME_COLORS[world.biome].glow}44;
-            transition: all 0.2s ease;
-          "
-          onmouseover="this.style.boxShadow='0 0 24px ${BIOME_COLORS[world.biome].glow}88'"
-          onmouseout="this.style.boxShadow='0 0 12px ${BIOME_COLORS[world.biome].glow}44'"
-        >⚡ Enter Portal</a>
+        <p style="margin:0 0 12px;font-size:13px;color:#a89cc8;font-style:italic;line-height:1.6;border-left:3px solid ${glow}55;padding-left:10px;">
+          &ldquo;${world.lore}&rdquo;
+        </p>
+        <div style="margin-bottom:14px;">${tags}</div>
+        <a href="${world.url}" target="_blank" rel="noopener noreferrer" style="
+          display:block;text-align:center;
+          background:linear-gradient(135deg,${core},${glow}cc);color:#fff;
+          text-decoration:none;padding:10px 18px;border-radius:10px;
+          font-size:14px;font-weight:bold;letter-spacing:1px;
+          border:1px solid ${glow}88;box-shadow:0 0 16px ${glow}44;
+          transition:all 0.2s ease;
+        " onmouseover="this.style.boxShadow='0 0 30px ${glow}88'" onmouseout="this.style.boxShadow='0 0 16px ${glow}44'">
+          \u26A1 Enter Portal
+        </a>
       </div>
     </div>
   `;
@@ -205,21 +143,24 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
     const map = L.map(mapRef.current, {
       crs: L.CRS.Simple,
       minZoom: -2,
-      maxZoom: 3,
+      maxZoom: 4,
       zoomControl: false,
       attributionControl: false,
-      maxBounds: bounds,
-      maxBoundsViscosity: 0.9,
+      maxBounds: [[-200, -200], [MAP_HEIGHT + 200, MAP_WIDTH + 200]],
+      maxBoundsViscosity: 0.85,
+      zoomSnap: 0.25,
+      zoomDelta: 0.5,
+      wheelPxPerZoomLevel: 100,
     });
 
-    // Generate and overlay the fantasy SVG map
+    // Generate and overlay the massive SVG map
     const imageUrl = generateFantasyMapSvg();
     L.imageOverlay(imageUrl, bounds).addTo(map);
 
-    // Fit the view to the map bounds with some padding
-    map.fitBounds(bounds, { padding: [10, 10] });
+    // Start slightly zoomed in for an immersive feel
+    map.setView([MAP_HEIGHT * 0.45, MAP_WIDTH * 0.45], -0.5);
 
-    // Custom zoom control in bottom-right
+    // Custom zoom control
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     // Click on map background to deselect
@@ -234,7 +175,7 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep markers in sync with world data
+  // Keep markers in sync
   const updateMarkers = useCallback(() => {
     const map = leafletMap.current;
     if (!map) return;
@@ -242,7 +183,6 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
     const existingIds = new Set(markersRef.current.keys());
     const newIds = new Set(worlds.map(w => w.id));
 
-    // Remove markers for worlds that no longer exist
     for (const id of existingIds) {
       if (!newIds.has(id)) {
         markersRef.current.get(id)?.remove();
@@ -250,7 +190,6 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
       }
     }
 
-    // Add or update markers
     for (const world of worlds) {
       const isSelected = world.id === selectedWorldId;
       const icon = createPortalIcon(world.biome, isSelected);
@@ -264,7 +203,7 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
         const marker = L.marker(latlng, { icon })
           .addTo(map)
           .bindPopup(createPopupContent(world), {
-            maxWidth: 300,
+            maxWidth: 320,
             className: 'fantasy-popup',
           });
 
@@ -290,11 +229,12 @@ export function FantasyMap({ worlds, selectedWorldId, onWorldSelect, onMapClick 
     if (world) {
       const marker = markersRef.current.get(world.id);
       if (marker) {
-        leafletMap.current.panTo([world.coordinates[0], world.coordinates[1]], {
-          animate: true,
-          duration: 0.8,
-        });
-        setTimeout(() => marker.openPopup(), 300);
+        leafletMap.current.flyTo(
+          [world.coordinates[0], world.coordinates[1]],
+          1,
+          { animate: true, duration: 1.2 }
+        );
+        setTimeout(() => marker.openPopup(), 600);
       }
     }
   }, [selectedWorldId, worlds]);

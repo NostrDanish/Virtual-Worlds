@@ -113,14 +113,18 @@ const Index = () => {
     });
   }, [setPromotedIds, toast]);
 
-  // ── Keyboard shortcut ─────────────────────────────────────────────────
+  // ── Keyboard shortcuts (guard against text inputs) ──────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target as HTMLElement)?.isContentEditable;
+
       if (e.key === 'Escape') {
         setSelectedWorldId(null);
         setSubmitOpen(false);
         setPendingOpen(false);
       }
+      if (isTyping) return; // Don't fire shortcuts while typing
       if (e.key === 'r' && !e.ctrlKey && !e.metaKey) handleRandomPortal();
       if (e.key === 'b' && !e.ctrlKey && !e.metaKey) setSidebarOpen(v => !v);
     };

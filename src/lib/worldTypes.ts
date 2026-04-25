@@ -69,5 +69,6 @@ export const KIND_REALM_UPVOTE = 1459;
 export const UPVOTE_THRESHOLD = 5;
 
 // Map image dimensions (for the SVG-based fantasy map)
-export const MAP_WIDTH = 3200;
-export const MAP_HEIGHT = 2000;
+// Massive scale for a truly immersive explorable world
+export const MAP_WIDTH = 8000;
+export const MAP_HEIGHT = 5000;
