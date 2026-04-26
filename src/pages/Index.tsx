@@ -15,7 +15,7 @@ import type { WorldMarker, PendingRealm } from '@/lib/worldTypes';
 import { BIOME_META } from '@/lib/worldTypes';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { Menu, X } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
 
